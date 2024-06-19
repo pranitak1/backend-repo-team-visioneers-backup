@@ -602,10 +602,11 @@ exports.getAllProjectsByUserId = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Find all workspaces where the user is a member
+        // Find all workspaces where the user is an active member
         const workspaces = await Workspace.find({
-            "members.user": userId,
-            "members.isActive": true
+            members: {
+                $elemMatch: { user: userId, isActive: true }
+            }
         }).populate('projects');
 
         // Collect and map all projects from the found workspaces
@@ -801,7 +802,6 @@ exports.getAllTasksByUserId = async (req, res) => {
  *       500:
  *         description: Error deactivating member
  */
-
 exports.exitMember = async (req, res) => {
     const { workspaceId, userId } = req.params;
 
@@ -817,8 +817,9 @@ exports.exitMember = async (req, res) => {
         }
 
         if (member.role === 'Admin') {
-            const otherAdmins = workspace.members.filter(m => m.role === 'Admin' && m.user.toString() !== userId);
-            if (otherAdmins.length === 0 && workspace.members.length > 1) {
+            const otherAdmins = workspace.members.filter(m => m.role === 'Admin' && m.user.toString() !== userId && m.isActive);
+            const activeMembers = workspace.members.filter(m => m.isActive);
+            if (otherAdmins.length === 0 && activeMembers.length > 1) {
                 return res.status(400).json({ message: 'Cannot deactivate the last admin. Please assign another admin first.' });
             }
         }
@@ -827,8 +828,8 @@ exports.exitMember = async (req, res) => {
         await workspace.exitMember(userId);
 
         // Check the number of active members
-        const activeMembers = workspace.members.filter(m => m.isActive);
-        if (activeMembers.length === 0) {
+        const activeMembersAfterDeactivation = workspace.members.filter(m => m.isActive);
+        if (activeMembersAfterDeactivation.length === 0) {
             // Append epoch to the workspace name
             workspace.name += `_${Date.now()}`;
             workspace.isActive = false;
