@@ -602,10 +602,11 @@ exports.getAllProjectsByUserId = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Find all workspaces where the user is a member
+        // Find all workspaces where the user is an active member
         const workspaces = await Workspace.find({
-            "members.user": userId,
-            "members.isActive": true
+            members: {
+                $elemMatch: { user: userId, isActive: true }
+            }
         }).populate('projects');
 
         // Collect and map all projects from the found workspaces
