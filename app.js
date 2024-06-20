@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 // app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 const corsOptions = {
-  origin: "https://lighthearted-lily-f405ec.netlify.app", // Replace with your Netlify domain
+  origin: "https://taskwiseai.netlify.app", // Replace with your Netlify domain
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
   optionsSuccessStatus: 204,
