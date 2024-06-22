@@ -692,13 +692,24 @@ exports.getAllTasksByUserId = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Aggregate tasks assigned to the user
+        // Fetch active workspaces where the user is an active member
+        const workspaces = await Workspace.find({
+            "members.user": userId,
+            "members.isActive": true,
+            isActive: true
+        }).select('_id');
+
+        if (workspaces.length === 0) {
+            res.status(200).json([]);
+        }
+
+        const workspaceIds = workspaces.map(workspace => workspace._id);
+
+        // Aggregate tasks assigned to the user within the fetched workspaces
         const aggregatePipeline = [
             {
                 $match: {
-                    "members.user": new ObjectId(userId),
-                    "members.isActive": true,
-                    isActive: true // Check for active workspace
+                    _id: { $in: workspaceIds }
                 }
             },
             {
